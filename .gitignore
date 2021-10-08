@@ -2,3 +2,4 @@
 *.bin
 data/DSMRsettings.ini
 *.csv
+.vscode/c_cpp_properties.json
