@@ -18,7 +18,6 @@
   #include <ESP8266mDNS.h>        // part of ESP8266 Core https://github.com/esp8266/Arduino
   #include <WiFiUdp.h>            // part of ESP8266 Core https://github.com/esp8266/Arduino
   #include <WiFiManager.h>        // version 0.14.0 - https://github.com/tzapu/WiFiManager
-
   #ifdef USE_UPDATE_SERVER
     //#include "ESP8266HTTPUpdateServer.h"  //Original version of ESP8266HTTPUpdateServer.h from ESP8266 Core
     #include "ModUpdateServer.h"            // https://github.com/mrWheel/ModUpdateServer
@@ -27,7 +26,8 @@
 
   //  included in main program: #include <TelnetStream.h>       // Version 0.0.1 - https://github.com/jandrassy/TelnetStream
   //  #include <Hash.h>
-  #include <FS.h>                                               // part of ESP8266 Core https://github.com/esp8266/Arduino
+  // #include <FS.h>                                               // part of ESP8266 Core https://github.com/esp8266/Arduino
+  #include <LittleFS.h>
 
 
   ESP8266WebServer        httpServer (80);
@@ -43,7 +43,7 @@
   #include <WiFiUdp.h>            // part of ESP32 Core
   #include <WiFiManager.h>
 
-  #include <SPIFFS.h>
+  #include <LittleFS.h>
 
   #ifdef USE_UPDATE_SERVER
     #include "ESP32ModUpdateServer.h"  // <<modified version of ESP32ModUpdateServer.h by Robert>>
@@ -60,10 +60,10 @@
 
 
 #if defined(ESP8266)
-  static      FSInfo SPIFFSinfo;
+  static      FSInfo fs_info;
 #elif defined(ESP32)
 #endif
-bool        SPIFFSmounted = false; 
+bool        LittleFSmounted = false; 
 bool        isConnected = false;
 
 //gets called when WiFiManager enters configuration mode
@@ -125,7 +125,7 @@ void startWiFi(const char* hostname, int timeOut)
     //delay(3000);
     esp_reboot();
     //delay(2000);
-    DebugTf(" took [%d] seconds ==> ERROR!\r\n", (millis() - lTime) / 1000);
+    DebugTf(" took [%d] seconds ==> ERROR!\r\n", (int)((millis() - lTime) / 1000));
     return;
   }
   
@@ -140,7 +140,7 @@ void startWiFi(const char* hostname, int timeOut)
   httpUpdater.setIndexPage(UpdateServerIndex);
   httpUpdater.setSuccessPage(UpdateServerSuccess);
 #endif
-  DebugTf(" took [%d] seconds => OK!\r\n", (millis() - lTime) / 1000);
+  DebugTf(" took [%d] seconds => OK!\r\n", int((millis() - lTime) / 1000));
   
 } // startWiFi()
 

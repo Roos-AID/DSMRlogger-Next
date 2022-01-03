@@ -54,7 +54,7 @@ void processTelegram()
     return;
   }
   
-  DebugTf("epoch actHour[%d] -- newHour[%d]\r\n", actT, newT);
+  DebugTf("epoch actHour[%d] -- newHour[%d]\r\n", (int)actT, (int)newT);
   DebugTf("Hour(local TZ)  actHour[%02d] -- newHour[%02d]\r\n", hour(actT), hour(newT));
    //--- if we have a new hour() update the previous hour
   if (hour(actT) != hour(newT)) {

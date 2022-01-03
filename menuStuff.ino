@@ -43,11 +43,7 @@ void displayBoardInfo()
   Debug(F("]\r\n              Compiled ["));  Debug( __DATE__ ); 
                                                Debug( "  " );
                                                Debug( __TIME__ );
-#ifdef USE_PRE40_PROTOCOL
-  Debug(F("]\r\n         compiled with [dsmr30.h] [USE_PRE40_PROTOCOL"));
-#else
   Debug(F("]\r\n         compiled with [dsmr.h"));
-#endif
   Debug(F("]\r\n              #defines "));
 #ifdef USE_REQUEST_PIN
   Debug(F("[USE_REQUEST_PIN]"));
@@ -112,16 +108,16 @@ void displayBoardInfo()
         snprintf(cMsg, sizeof(cMsg), "%08X (PUYA)", ESP.getFlashChipId());
   else  snprintf(cMsg, sizeof(cMsg), "%08X", ESP.getFlashChipId());
   Debug(F("]\r\n         Flash Chip ID ["));  Debug( cMsg );
-  SPIFFS.info(SPIFFSinfo);
+  LittleFS.info(fs_info);
 #endif
   
 
   Debug(F("]\r\n  Flash Chip Size (kB) ["));  Debug( ESP.getFlashChipSize() / 1024 );
 #if defined(ESP8266) 
   Debug(F("]\r\n   Chip Real Size (kB) ["));  Debug( ESP.getFlashChipRealSize() / 1024 );
-  Debug(F("]\r\n      SPIFFS Size (kB) ["));  Debug( SPIFFSinfo.totalBytes / 1024 );
+  Debug(F("]\r\n      LittleFS Size (kB) ["));  Debug( fs_info.totalBytes / 1024 );
 #elif defined(ESP32)
-  Debug(F("]\r\n      SPIFFS Size (kB) ["));  Debug( SPIFFS.totalBytes() / 1024 );
+  Debug(F("]\r\n      LittleFS Size (kB) ["));  Debug( LittleFS.totalBytes() / 1024 );
 #endif
 
   Debug(F("]\r\n      Flash Chip Speed ["));  Debug( ESP.getFlashChipSpeed() / 1000 / 1000 );
@@ -279,11 +275,11 @@ void handleKeyInput()
                     break;
       default:      Debugln(F("\r\nCommands are:\r\n"));
                     Debugln(F("   B - Board Info\r"));
-                    Debugln(F("  *E - erase file from SPIFFS\r"));
+                    Debugln(F("  *E - erase file from LittleFS\r"));
                     Debugln(F("   L - list Settings\r"));
-                    Debugln(F("   D - Display Day table from SPIFFS\r"));
-                    Debugln(F("   H - Display Hour table from SPIFFS\r"));
-                    Debugln(F("   M - Display Month table from SPIFFS\r"));
+                    Debugln(F("   D - Display Day table from LittleFS\r"));
+                    Debugln(F("   H - Display Hour table from LittleFS\r"));
+                    Debugln(F("   M - Display Month table from LittleFS\r"));
                   #if defined(HAS_NO_SLIMMEMETER)
                     Debugln(F("  *F - Force build RING files\r"));
                   #endif
@@ -302,8 +298,8 @@ void handleKeyInput()
                     Debugln(F("   Q - dump sysLog file\r"));
 #endif
                     Debugln(F("  *R - Reboot\r"));
-                    Debugln(F("   S - File info on SPIFFS\r"));
-                    Debugln(F("  *U - Update SPIFFS (save Data-files)\r"));
+                    Debugln(F("   S - File info on LittleFS\r"));
+                    Debugln(F("  *U - Update LittleFS (save Data-files)\r"));
                     Debugln(F("  *Z - Zero counters\r\n"));
                     if (Verbose1 & Verbose2)  Debugln(F("   V - Toggle Verbose Off\r"));
                     else if (Verbose1)        Debugln(F("   V - Toggle Verbose 2\r"));
@@ -313,11 +309,14 @@ void handleKeyInput()
                     #endif
 
     } // switch()
+
+    int dummy;
     while (TelnetStream.available() > 0) 
     {
        yield();
-       (char)TelnetStream.read();
+       dummy = TelnetStream.read();
     }
+    dummy = dummy + 1;
   }
   
 } // handleKeyInput()

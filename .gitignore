@@ -2,3 +2,9 @@
 *.bin
 data/DSMRsettings.ini
 *.csv
+*.bin
+.DS_Store
+node_modules/*
+package-lock.json
+*.log
+.vscode/*

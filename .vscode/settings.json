@@ -1,10 +1,7 @@
 {
+    "C_Cpp.intelliSenseEngineFallback": "Enabled",
+    "C_Cpp.intelliSenseEngine": "Tag Parser",
     "files.associations": {
-        "*.yaml": "home-assistant",
-        "*.inc": "cpp",
-        "string": "cpp",
-        "xlocale": "cpp",
-        "xstring": "cpp",
-        "xutility": "cpp"
+        "en": "cpp"
     }
 }

@@ -177,11 +177,7 @@ struct buildJsonMQTT {
     void apply(Item &i) {
       if (i.present()) 
       {
-        String Name = Item::name;
-        #if defined( USE_PRE40_PROTOCOL )
-          //-- for dsmr30 ----------------------------------------------- 
-          if (Name.indexOf("gas_delivered2") == 0) Name = "gas_delivered";
-        #endif
+        String Name = Item::get_name();
         String Unit = Item::unit();
 
         if (settingMQTTtopTopic[strlen(settingMQTTtopTopic)-1] == '/')
@@ -342,10 +338,10 @@ void doAutoConfigure()
   String sMsg="";
   File fh; //filehandle
   //Let's open the MQTT autoconfig file
-  SPIFFS.begin();
-  if (SPIFFS.exists(cfgFilename))
+  LittleFS.begin();
+  if (LittleFS.exists(cfgFilename))
   {
-    fh = SPIFFS.open(cfgFilename, "r");
+    fh = LittleFS.open(cfgFilename, "r");
     if (fh) {
       //Lets go read the config and send it out to MQTT line by line
       while(fh.available()) 

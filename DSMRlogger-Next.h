@@ -23,13 +23,14 @@
     #define DTR_ENABLE  12
   #endif
   #define SM_SERIAL Serial
+  #include <LittleFS.h>
+
 #elif defined(ESP32)
   #define ESP_RESET()             ESP.restart()
   #define ESP_GET_FREE_BLOCK()    ESP.getMaxAllocHeap()
   #define ESP_GET_CHIPID()        ((uint32_t)ESP.getEfuseMac()) //The chipID is essentially its MAC address (length: 6 bytes) 
   const char *flashMode[]         { "QIO", "QOUT", "DIO", "DOUT", "FAST READ", "SLOWREAD", "Unknown" };
-
-  #include "SPIFFS.h"
+  
   #include <rom/rtc.h>          // SDK ESP32 for reset reason function (see helper function)
   // ESP32 JDJ REV2 
   // LED PIN  24              //GPIO  --  data pin for WS2812B pixel
@@ -52,6 +53,10 @@
   #ifdef USE_REQUEST_PIN
     #define DTR_ENABLE  27
   #endif
+
+  #include <LITTLEFS.h>
+  #define LittleFS LITTLEFS
+
 #endif
 
 
@@ -72,16 +77,8 @@
   #define writeToSysLog(...)  // nothing
 #endif
 
-#if defined( USE_PRE40_PROTOCOL )                               //PRE40
-  //  https://github.com/mrWheel/arduino-dsmr30.git             //PRE40
-  #include <dsmr30.h>                                           //PRE40
-#elif defined( USE_BELGIUM_PROTOCOL )                           //Belgium
-  //  https://github.com/mrWheel/arduino-dsmr-be.git            //Belgium
-  #include <dsmr-be.h>                                          //Belgium
-#else                                                           //else
-  //  https://github.com/matthijskooijman/arduino-dsmr
-  #include <dsmr.h>               // Version 0.1 - Commit f79c906 on 18 Sep 2018
-#endif
+//  https://github.com/matthijskooijman/arduino-dsmr
+#include <dsmr.h>               // Version Jan 2022 !!!
 
 #define _DEFAULT_HOSTNAME  "DSMR-API"  
 
@@ -168,9 +165,6 @@ using MyData = ParsedData<
   /* String */        ,gas_equipment_id
   /* uint8_t */       ,gas_valve_position
   /* TimestampedFixedValue */ ,gas_delivered
-#ifdef USE_PRE40_PROTOCOL                          //PRE40
-  /* TimestampedFixedValue */ ,gas_delivered2      //PRE40
-#endif                                             //PRE40
   /* uint16_t */      ,thermal_device_type
   /* String */        ,thermal_equipment_id
   /* uint8_t */       ,thermal_valve_position
@@ -263,7 +257,7 @@ void delayms(unsigned long);
 
 
 String    lastReset           = "";
-bool      spiffsNotPopulated  = false;
+bool      LittleFSNotPopulated  = false;
 bool      hasAlternativeIndex = false;
 bool      mqttIsConnected     = false;
 bool      Verbose1 = false, Verbose2 = false;

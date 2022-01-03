@@ -68,11 +68,11 @@ void initInfluxDB()
     
   //Enable messages batching and retry buffer
   //deprecated writeoptions: 
-  client.setWriteOptions(WRITE_PRECISION, MAX_BATCH_SIZE, WRITE_BUFFER_SIZE);
+  // client.setWriteOptions(WRITE_PRECISION, MAX_BATCH_SIZE, WRITE_BUFFER_SIZE);
   
-  // client.setWriteOptions(WriteOptions().writePrecision(WRITE_PRECISION));
-  // client.setWriteOptions(WriteOptions().batchSize(MAX_BATCH_SIZE));
-  // client.setWriteOptions(WriteOptions().bufferSize(WRITE_BUFFER_SIZE));
+  client.setWriteOptions(WriteOptions().writePrecision(WRITE_PRECISION));
+  client.setWriteOptions(WriteOptions().batchSize(MAX_BATCH_SIZE));
+  client.setWriteOptions(WriteOptions().bufferSize(WRITE_BUFFER_SIZE));
 
   //setup the HTTPoptions to reuse HTTP
   //client.setHTTPOptions(HTTPOptions().connectionReuse(true));
@@ -89,7 +89,7 @@ struct writeInfluxDataPoints {
         //when there is a unit, then it is a measurement
         Point pointItem(Item::unit());
         pointItem.setTime(thisEpoch);
-        pointItem.addTag("instance",Item::name);     
+        pointItem.addTag("instance",Item::get_name());     
         pointItem.addField("value", i.val());
         if (Verbose1) {
           DebugT("Writing to influxdb:");

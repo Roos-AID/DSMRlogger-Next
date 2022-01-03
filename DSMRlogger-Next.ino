@@ -26,7 +26,7 @@
     - Board: "Generic ESP8266 Module"
     - Builtin Led: "2"  // GPIO02 for Wemos and ESP-12
     - Flash mode: "DOUT" | "DIO"    // changes only after power-off and on again!
-    - Flash size: "4MB (FS: 2MB OAT:~1019KB)"  << LET OP! 2MB SPIFFS
+    - Flash size: "4MB (FS: 2MB OAT:~1019KB)"  << LET OP! 2MB LittleFS
     - DebugT port: "Disabled"
     - DebugT Level: "None"
     - IwIP Variant: "v2 Lower Memory"
@@ -79,16 +79,14 @@
 /******************** compiler options  ********************************************/
 #define USE_REQUEST_PIN           // define if it's a esp8266 with GPIO 12 connected to SM DTR pin
 #define USE_UPDATE_SERVER         // define if there is enough memory and updateServer to be used
-//  #define USE_BELGIUM_PROTOCOL      // define if Slimme Meter is a Belgium Smart Meter
-//  #define USE_PRE40_PROTOCOL        // define if Slimme Meter is pre DSMR 4.0 (2.2 .. 3.0)
 //  #define USE_NTP_TIME              // define to generate Timestamp from NTP (Only Winter Time for now)
 //  #define HAS_NO_SLIMMEMETER        // define for testing only!
 #define USE_INFLUXDB              // define if you want to use Influxdb (configure through webinterface)
 #define USE_MQTT                  // define if you want to use MQTT (configure through webinterface)
-#define USE_MINDERGAS             // define if you want to update mindergas (configure through webinterface)
+// #define USE_MINDERGAS             // define if you want to update mindergas (configure through webinterface)
 //  #define USE_SYSLOGGER               // define if you want to use the sysLog library for debugging
 //  #define SHOW_PASSWRDS               // well .. show the PSK key and MQTT password, what else?
-//  #define USE_WEMOSLOLIN32            //define if it is a WEMOS LOLIN32 with OLED (requires different IO pins and I2Cadres)
+#define USE_WEMOSLOLIN32            //define if it is a WEMOS LOLIN32 with OLED (requires different IO pins and I2Cadres)
 /******************** don't change anything below this comment **********************/
 
 #ifndef LED_BUILTIN
@@ -103,7 +101,7 @@ struct showValues {
     TelnetStream.print("showValues: ");
     if (i.present()) 
     {
-      TelnetStream.print(Item::name);
+      TelnetStream.print(Item::get_name());
       TelnetStream.print(F(": "));
       TelnetStream.print(i.val());
       TelnetStream.print(Item::unit());
@@ -299,23 +297,23 @@ void setup()
   
 //=============end Networkstuff======================================
 
-//============= start SPIFFS ========================================
-  if (SPIFFS.begin()) 
+//============= start LittleFS ========================================
+  if (LittleFS.begin()) 
   {
-    DebugTln(F("SPIFFS Mount succesfull\r"));
-    SPIFFSmounted = true;
+    DebugTln(F("LittleFS Mount succesfull\r"));
+    LittleFSmounted = true;
     if (settingOledType > 0)
     {
       oled_Print_Msg(0, " <DSMRlogger-Next>", 0);
-      oled_Print_Msg(3, "SPIFFS mounted", 1500);
+      oled_Print_Msg(3, "LittleFS mounted", 1500);
     }    
   } else { 
-    DebugTln(F("SPIFFS Mount failed\r"));   // Serious problem with SPIFFS 
-    SPIFFSmounted = false;
+    DebugTln(F("LittleFS Mount failed\r"));   // Serious problem with LittleFS 
+    LittleFSmounted = false;
     if (settingOledType > 0)
     {
       oled_Print_Msg(0, " <DSMRlogger-Next>", 0);
-      oled_Print_Msg(3, "SPIFFS FAILED!", 2000);
+      oled_Print_Msg(3, "LittleFS FAILED!", 2000);
     }
   }
 
@@ -332,7 +330,7 @@ void setup()
                                                                     , slotErrors);                                                                    
   readSettings(true);
 
-//============= end SPIFFS ========================================
+//============= end LittleFS ========================================
 
 #if defined(USE_NTP_TIME)                                   //USE_NTP
 //================ startNTP =========================================
@@ -370,7 +368,7 @@ void setup()
 
   Debugf("\nGebruik 'telnet %s ' voor verdere debugging\r\n",WiFi.localIP().toString().c_str());
 
-//=============now test if SPIFFS is correct populated!============
+//=============now test if LittleFS is correct populated!============
   if (DSMRfileExist(settingIndexPage, false) )
   {
     if (strcmp(settingIndexPage, "DSMRindex.html") != 0)
@@ -387,7 +385,7 @@ void setup()
   }
   if (!hasAlternativeIndex && !DSMRfileExist("/DSMRindex.html", false) )
   {
-    spiffsNotPopulated = true;
+    LittleFSNotPopulated = true;
   }
   if (!hasAlternativeIndex)    //--- there's no alternative index.html
   {
@@ -397,27 +395,20 @@ void setup()
   }
   if (!DSMRfileExist("/FSexplorer.html", true))
   {
-    spiffsNotPopulated = true;
+    LittleFSNotPopulated = true;
   }
   if (!DSMRfileExist("/FSexplorer.css", true))
   {
-    spiffsNotPopulated = true;
+    LittleFSNotPopulated = true;
   }
-//=============end SPIFFS =========================================
+//=============end LittleFS =========================================
 #ifdef USE_SYSLOGGER
-  if (spiffsNotPopulated)
+  if (LittleFSNotPopulated)
   {
-    sysLog.write("SPIFFS is not correct populated (files are missing)");
+    sysLog.write("LittleFS is not correct populated (files are missing)");
   }
 #endif
   
-//=============now test if "convertPRD" file exists================
-
-  if (SPIFFS.exists("/!PRDconvert") )
-  {
-    convertPRD2RING();
-  }
-
 //=================================================================
 
 #if defined(USE_NTP_TIME)                                                           //USE_NTP
@@ -453,12 +444,12 @@ void setup()
 
 //================ Start HTTP Server ================================
 
-  if (!spiffsNotPopulated) {
-    DebugTln(F("SPIFFS correct populated -> normal operation!\r"));
+  if (!LittleFSNotPopulated) {
+    DebugTln(F("LittleFS correct populated -> normal operation!\r"));
     if (settingOledType > 0)
     {
       oled_Print_Msg(0, " <DSMRlogger-Next>", 0); 
-      oled_Print_Msg(1, "OK, SPIFFS correct", 0);
+      oled_Print_Msg(1, "OK, LittleFS correct", 0);
       oled_Print_Msg(2, "Verder met normale", 0);
       oled_Print_Msg(3, "Verwerking ;-)", 2500);
     }
@@ -471,36 +462,36 @@ void setup()
     if (hasAlternativeIndex)
     {
       DebugTln(F("has Alternative Index"));
-      httpServer.serveStatic("/",                 SPIFFS, settingIndexPage);
-      httpServer.serveStatic("/index",            SPIFFS, settingIndexPage);
-      httpServer.serveStatic("/index.html",       SPIFFS, settingIndexPage);
-      httpServer.serveStatic("/DSMRindex.html",   SPIFFS, settingIndexPage);
+      httpServer.serveStatic("/",                 LittleFS, settingIndexPage);
+      httpServer.serveStatic("/index",            LittleFS, settingIndexPage);
+      httpServer.serveStatic("/index.html",       LittleFS, settingIndexPage);
+      httpServer.serveStatic("/DSMRindex.html",   LittleFS, settingIndexPage);
     }
     else
     {
       DebugTln(F("has Alternative Index"));
-      httpServer.serveStatic("/",                 SPIFFS, "/DSMRindex.html");
+      httpServer.serveStatic("/",                 LittleFS, "/DSMRindex.html");
       DebugTln(F("added serverStatic [/]"));
-      httpServer.serveStatic("/DSMRindex.html",   SPIFFS, "/DSMRindex.html");
+      httpServer.serveStatic("/DSMRindex.html",   LittleFS, "/DSMRindex.html");
       DebugTln(F("added serverStatic [/DSMRindex.html]"));
-      httpServer.serveStatic("/index",            SPIFFS, "/DSMRindex.html");
+      httpServer.serveStatic("/index",            LittleFS, "/DSMRindex.html");
       DebugTln(F("added serverStatic [/index]"));
-      httpServer.serveStatic("/index.html",       SPIFFS, "/DSMRindex.html");
+      httpServer.serveStatic("/index.html",       LittleFS, "/DSMRindex.html");
       DebugTln(F("added serverStatic [/index.html]"));
-      httpServer.serveStatic("/DSMRindex.css",    SPIFFS, "/DSMRindex.css");
+      httpServer.serveStatic("/DSMRindex.css",    LittleFS, "/DSMRindex.css");
       DebugTln(F("added serverStatic [/DSMRindex.css]"));
-      httpServer.serveStatic("/DSMRindex.js",     SPIFFS, "/DSMRindex.js");
+      httpServer.serveStatic("/DSMRindex.js",     LittleFS, "/DSMRindex.js");
       DebugTln(F("added serverStatic [/DSMRindex.js]"));
-      httpServer.serveStatic("/DSMRgraphics.js",  SPIFFS, "/DSMRgraphics.js");
+      httpServer.serveStatic("/DSMRgraphics.js",  LittleFS, "/DSMRgraphics.js");
       DebugTln(F("serverStatic [/DSMRgraphics.js]"));
     }
   } else {
-    DebugTln(F("Oeps! not all files found on SPIFFS -> present FSexplorer!\r"));
-    spiffsNotPopulated = true;
+    DebugTln(F("Oeps! not all files found on LittleFS -> present FSexplorer!\r"));
+    LittleFSNotPopulated = true;
     if (settingOledType > 0)
     {
       oled_Print_Msg(0, "!OEPS! niet alle", 0);
-      oled_Print_Msg(1, "files op SPIFFS", 0);
+      oled_Print_Msg(1, "files op LittleFS", 0);
       oled_Print_Msg(2, "gevonden! (fout!)", 0);
       oled_Print_Msg(3, "Start FSexplorer", 2000);
     }
@@ -508,7 +499,7 @@ void setup()
   
   DebugTln(F("setupFSexplorer"));
   setupFSexplorer();
-  httpServer.serveStatic("/FSexplorer.png",   SPIFFS, "/FSexplorer.png");
+  httpServer.serveStatic("/FSexplorer.png",   LittleFS, "/FSexplorer.png");
 
   DebugTln(F("setup RESTAPI interface"));
   httpServer.on("/api", HTTP_GET, processAPI);

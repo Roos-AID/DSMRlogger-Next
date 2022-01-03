@@ -13,24 +13,15 @@ void initSlimmermeter()
 {
 #if defined( USE_REQUEST_PIN ) && !defined( HAS_NO_SLIMMEMETER )
   #if defined(ESP8266) 
-    #ifdef USE_PRE40_PROTOCOL                                                        
-      SM_SERIAL.begin(9600, SERIAL_7E1);                                               
-    #else   // not use_dsmr_30                                                        
-      SM_SERIAL.begin(115200, SERIAL_8N1);
-    #endif  // use_dsmr_30
+    SM_SERIAL.begin(115200, SERIAL_8N1);
     DebugTf("Swapping serial port to Smart Meter, debug output will continue on telnet\r\n");
     DebugFlush();
     SM_SERIAL.swap();      // swap to SmartMeter
   #elif defined(ESP32)
     DebugTf("Serialport set to (RX,TX) (%d/%d)\r\n", RXD2, TXD2 );
-    #ifdef USE_PRE40_PROTOCOL                                                       
-      SM_SERIAL.begin( 9600, SERIAL_7E1, RXD2, TXD2 );   
-      //SM_SERIAL.begin(9600, SERIAL_7E1);                            
-    #else   // DSMR 4.x & 5.x
       //Serial2.begin( 115200, SERIAL_8N1, 16, 17 );  
       SM_SERIAL.begin( 115200, SERIAL_8N1, RXD2, TXD2 );
       //SM_SERIAL.begin(115200, SERIAL_8N1);
-    #endif  // use_dsmr_30
   #endif
 
   #ifdef DTR_ENABLE
@@ -108,16 +99,8 @@ void processSlimmemeterRaw()
   }
 
   tlgrm[l++] = '!';
-#if !defined( USE_PRE40_PROTOCOL )
-  // next 6 bytes are "<CRC>\r\n"
-  for (int i=0; ( i<6 && (i<(sizeof(tlgrm)-7)) ); i++)
-  {
-    tlgrm[l++] = (char)SM_SERIAL.read();
-  }
-#else
   tlgrm[l++]    = '\r';
   tlgrm[l++]    = '\n';
-#endif
   tlgrm[(l +1)] = '\0';
   // shift telegram 1 char to the right (make room at pos [0] for '/')
   for (int i=strlen(tlgrm); i>=0; i--) { tlgrm[i+1] = tlgrm[i]; yield(); }
@@ -135,7 +118,7 @@ void processSlimmemeter()
   slimmeMeter.loop();
   if (slimmeMeter.available()) 
   {
-    if (Verbose2) DebugTf("Telegram received [%d] ms after DTR enable.\r\n",  (timerTlg-millis()));
+    if (Verbose2) DebugTf("Telegram received [%d] ms after DTR enable.\r\n",  (int)(timerTlg-millis()));
     Debugln(F("\r\n[Time----][FreeHea| Frags| mBlck] Function----(line):\r"));
     DebugTf("telegramCount=[%d] telegramErrors=[%d]\r\n", telegramCount, telegramErrors);
     //  Voorbeeld: [21:00:11][   9880|     9|  8960] loop        ( 997): read telegram [28] => [140307210001S]

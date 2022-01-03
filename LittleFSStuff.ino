@@ -1,6 +1,6 @@
 /* 
 ***************************************************************************  
-**  Program  : SPIFFSstuff, part of DSMRlogger-Next
+**  Program  : LittleFSstuff, part of DSMRlogger-Next
 **  Version  : v2.3.0-rc5
 **
 **  Copyright (c) 2020 Willem Aandewiel
@@ -11,16 +11,16 @@
 
 int16_t bytesWritten;
 
-//static    FSInfo SPIFFSinfo;
+//static    FSInfo fs_info;
 
 //====================================================================
 void readLastStatus()
 {
   char buffer[50] = "";
   char dummy[50] = "";
-  char spiffsTimestamp[20] = "";
+  char LittleFSTimestamp[20] = "";
 
-  File _file = SPIFFS.open("/DSMRstatus.csv", "r");
+  File _file = LittleFS.open("/DSMRstatus.csv", "r");
   if (!_file)
   {
     DebugTln("read(): No /DSMRstatus.csv found ..");
@@ -30,16 +30,16 @@ void readLastStatus()
     int l = _file.readBytesUntil('\n', buffer, sizeof(buffer));
     buffer[l] = 0;
     DebugTf("read lastUpdate[%s]\r\n", buffer);
-    sscanf(buffer, "%[^;]; %u; %u; %[^;]", spiffsTimestamp, &nrReboots, &slotErrors, dummy);
-    DebugTf("values timestamp[%s], nrReboots[%u], slotErrors[%u], dummy[%s]\r\n", spiffsTimestamp, nrReboots, slotErrors, dummy);
+    sscanf(buffer, "%[^;]; %u; %u; %[^;]", LittleFSTimestamp, &nrReboots, &slotErrors, dummy);
+    DebugTf("values timestamp[%s], nrReboots[%u], slotErrors[%u], dummy[%s]\r\n", LittleFSTimestamp, nrReboots, slotErrors, dummy);
     yield();
   }
   _file.close();
-  if (strlen(spiffsTimestamp) != 13)
+  if (strlen(LittleFSTimestamp) != 13)
   {
-    strncpy(spiffsTimestamp, "010101010101X", sizeof(spiffsTimestamp));
+    strncpy(LittleFSTimestamp, "010101010101X", sizeof(LittleFSTimestamp));
   }
-  snprintf(actTimestamp, sizeof(actTimestamp), "%s", spiffsTimestamp);
+  snprintf(actTimestamp, sizeof(actTimestamp), "%s", LittleFSTimestamp);
 
 } // readLastStatus()
 
@@ -57,7 +57,7 @@ void writeLastStatus()
   char buffer[50] = "";
   DebugTf("writeLastStatus() => %s; %u; %u;\r\n", actTimestamp, nrReboots, slotErrors);
   writeToSysLog("writeLastStatus() => %s; %u; %u;", actTimestamp, nrReboots, slotErrors);
-  File _file = SPIFFS.open("/DSMRstatus.csv", "w");
+  File _file = LittleFS.open("/DSMRstatus.csv", "w");
   if (!_file)
   {
     DebugTln("write(): No /DSMRstatus.csv found ..");
@@ -70,23 +70,18 @@ void writeLastStatus()
 } // writeLastStatus()
 
 //===========================================================================================
-bool buildDataRecordFromSM(char *recIn)
+void buildDataRecordFromSM(char *recIn)
 {
-  static float GG = 1;
+  // static float GG = 1;
   char record[DATA_RECLEN + 1] = "";
   char key[10] = "";
 
-  uint16_t recSlot = timestampToHourSlot(actTimestamp, strlen(actTimestamp));
+  // uint16_t recSlot = timestampToHourSlot(actTimestamp, strlen(actTimestamp));
   strlcpy(key, actTimestamp + 0, 9);
 
   snprintf(record, sizeof(record), (char *)DATA_FORMAT, key, (float)DSMRdata.energy_delivered_tariff1, (float)DSMRdata.energy_delivered_tariff2, (float)DSMRdata.energy_returned_tariff1, (float)DSMRdata.energy_returned_tariff2
-#ifdef USE_PRE40_PROTOCOL
-           ,
-           (float)DSMRdata.gas_delivered2);
-#else
            ,
            (float)DSMRdata.gas_delivered);
-#endif
   // DATA + \n + \0
   fillRecord(record, DATA_RECLEN);
 
@@ -160,7 +155,7 @@ void writeDataToFile(const char *fileName, const char *record, uint16_t slot, in
     return;
   }
 
-  if (!SPIFFS.exists(fileName))
+  if (!LittleFS.exists(fileName))
   {
     switch (fileType)
     {
@@ -176,7 +171,7 @@ void writeDataToFile(const char *fileName, const char *record, uint16_t slot, in
     }
   }
 
-  File dataFile = SPIFFS.open(fileName, "r+"); // read and write ..
+  File dataFile = LittleFS.open(fileName, "r+"); // read and write ..
   if (!dataFile)
   {
     DebugTf("Error opening [%s]\r\n", fileName);
@@ -247,13 +242,13 @@ void readOneSlot(int8_t fileType, const char *fileName, uint8_t recNr, uint8_t r
     break;
   }
 
-  if (!SPIFFS.exists(fileName))
+  if (!LittleFS.exists(fileName))
   {
     DebugTf("File [%s] does not excist!\r\n", fileName);
     return;
   }
 
-  File dataFile = SPIFFS.open(fileName, "r+"); // read and write ..
+  File dataFile = LittleFS.open(fileName, "r+"); // read and write ..
   if (!dataFile)
   {
     DebugTf("Error opening [%s]\r\n", fileName);
@@ -358,7 +353,7 @@ bool createFile(const char *fileName, uint16_t noSlots)
 {
   DebugTf("fileName[%s], fileRecLen[%d]\r\n", fileName, DATA_RECLEN);
 
-  File dataFile = SPIFFS.open(fileName, "a"); // create File
+  File dataFile = LittleFS.open(fileName, "a"); // create File
   // -- first write fileHeader ----------------------------------------
   snprintf(cMsg, sizeof(cMsg), "%s", DATA_CSV_HEADER); // you cannot modify *fileHeader!!!
   fillRecord(cMsg, DATA_RECLEN);
@@ -388,7 +383,7 @@ bool createFile(const char *fileName, uint16_t noSlots)
   } // for ..
 
   dataFile.close();
-  dataFile = SPIFFS.open(fileName, "r+"); // open for Read & writing
+  dataFile = LittleFS.open(fileName, "r+"); // open for Read & writing
   if (!dataFile)
   {
     DebugTf("Something is very wrong writing to [%s]\r\n", fileName);
@@ -440,7 +435,8 @@ uint16_t timestampToHourSlot(const char *TS, int8_t len)
   if (Verbose1)
     DebugTf("===>>>>>  HOUR[%02d] => recSlot[%02d]\r\n", hour(t1), recSlot);
 
-  if (recSlot < 0 || recSlot >= _NO_HOUR_SLOTS_)
+  // if (recSlot < 0 || recSlot >= _NO_HOUR_SLOTS_) //comparison is always false due to limited range of data type recSlot
+  if (recSlot >= _NO_HOUR_SLOTS_)
   {
     DebugTf("HOUR: Some serious error! Slot is [%d]\r\n", recSlot);
     recSlot = _NO_HOUR_SLOTS_;
@@ -496,12 +492,12 @@ uint16_t timestampToMonthSlot(const char *TS, int8_t len)
 int32_t freeSpace()
 {
 #if defined(ESP8266)
-  FSInfo SPIFFSinfo;
-  SPIFFS.info(SPIFFSinfo);
-  Debugln((int32_t)(SPIFFSinfo.totalBytes - SPIFFSinfo.usedBytes) + " bytes ruimte in SPIFFS");
-  return (int32_t)(SPIFFSinfo.totalBytes - SPIFFSinfo.usedBytes);
+  FSInfo fs_info;
+  LittleFS.info(fs_info);
+  Debugln((int32_t)(fs_info.totalBytes - fs_info.usedBytes) + " bytes ruimte in LittleFS");
+  return (int32_t)(fs_info.totalBytes - fs_info.usedBytes);
 #elif defined(ESP32)
-  return (SPIFFS.totalBytes() - SPIFFS.usedBytes());
+  return (LittleFS.totalBytes() - LittleFS.usedBytes());
 #endif
 
 } // freeSpace()
@@ -520,7 +516,7 @@ void ESP8266_listFiles()
   _fileMeta dirMap[30];
   int fileNr = 0;
 
-  Dir dir = SPIFFS.openDir("/"); // List files on SPIFFS
+  Dir dir = LittleFS.openDir("/"); // List files on LittleFS
   while (dir.next())
   {
     dirMap[fileNr].Name[0] = '\0';
@@ -553,17 +549,17 @@ void ESP8266_listFiles()
     yield();
   }
 
-  SPIFFS.info(SPIFFSinfo);
+  LittleFS.info(fs_info);
 
   Debugln(F("\r"));
-  if (freeSpace() < (10 * SPIFFSinfo.blockSize))
-    Debugf("Available SPIFFS space [%6d]kB (LOW ON SPACE!!!)\r\n", (freeSpace() / 1024));
+  if (freeSpace() < (10 * fs_info.blockSize))
+    Debugf("Available LittleFS space [%6d]kB (LOW ON SPACE!!!)\r\n", (freeSpace() / 1024));
   else
-    Debugf("Available SPIFFS space [%6d]kB\r\n", (freeSpace() / 1024));
-  Debugf("           SPIFFS Size [%6d]kB\r\n", (SPIFFSinfo.totalBytes / 1024));
-  Debugf("     SPIFFS block Size [%6d]bytes\r\n", SPIFFSinfo.blockSize);
-  Debugf("      SPIFFS page Size [%6d]bytes\r\n", SPIFFSinfo.pageSize);
-  Debugf(" SPIFFS max.Open Files [%6d]\r\n\r\n", SPIFFSinfo.maxOpenFiles);
+    Debugf("Available LittleFS space [%6d]kB\r\n", (freeSpace() / 1024));
+  Debugf("           LittleFS Size [%6d]kB\r\n", (fs_info.totalBytes / 1024));
+  Debugf("     LittleFS block Size [%6d]bytes\r\n", fs_info.blockSize);
+  Debugf("      LittleFS page Size [%6d]bytes\r\n", fs_info.pageSize);
+  Debugf(" LittleFS max.Open Files [%6d]\r\n\r\n", fs_info.maxOpenFiles);
 
 } // ESP8266_listFiles()
 
@@ -580,7 +576,7 @@ void ESP32_listFiles()
   _fileMeta dirMap[30];
   int fileNr = 0;
 
-  File root = SPIFFS.open("/"); // List files on SPIFFS
+  File root = LittleFS.open("/"); // List files on LittleFS
   if (!root)
   {
     DebugTln("- failed to open directory");
@@ -641,11 +637,11 @@ void ESP32_listFiles()
   }
 
   Debugln(F("\r"));
-  Debugf("Available SPIFFS space [%6d]kB\r\n", (freeSpace() / 1024));
-  Debugf("           SPIFFS Size [%6d]kB\r\n", (SPIFFS.totalBytes() / 1024));
-  //  Debugf("     SPIFFS block Size [%6d]bytes\r\n", SPIFFS.blockSize());
-  //  Debugf("      SPIFFS page Size [%6d]bytes\r\n", SPIFFS.pageSize());
-  //  Debugf(" SPIFFS max.Open Files [%6d]\r\n\r\n", SPIFFS.maxOpenFiles());
+  Debugf("Available LittleFS space [%6d]kB\r\n", (freeSpace() / 1024));
+  Debugf("           LittleFS Size [%6d]kB\r\n", (LittleFS.totalBytes() / 1024));
+  //  Debugf("     LittleFS block Size [%6d]bytes\r\n", LittleFS.blockSize());
+  //  Debugf("      LittleFS page Size [%6d]bytes\r\n", LittleFS.pageSize());
+  //  Debugf(" LittleFS max.Open Files [%6d]\r\n\r\n", LittleFS.maxOpenFiles());
 
 } // ESP32_listFiles()
 #endif
@@ -660,17 +656,17 @@ void listFiles() // Senden aller Daten an den Client
 } // listFiles()
 
 //===========================================================================================
-bool eraseFile()
+void eraseFile()
 {
   char eName[30] = "";
-
+  int dummy;
   //--- erase buffer
   while (TelnetStream.available() > 0)
   {
     yield();
-    (char)TelnetStream.read();
+    dummy = TelnetStream.read();
   }
-
+  dummy = dummy + 1;
   Debug("Enter filename to erase: ");
   TelnetStream.setTimeout(10000);
   TelnetStream.readBytesUntil('\n', eName, sizeof(eName));
@@ -687,22 +683,23 @@ bool eraseFile()
   //--- add leading slash on position 0
   eName[0] = '/';
 
-  if (SPIFFS.exists(eName))
+  if (LittleFS.exists(eName))
   {
-    Debugf("\r\nErasing [%s] from SPIFFS\r\n\n", eName);
-    SPIFFS.remove(eName);
+    Debugf("\r\nErasing [%s] from LittleFS\r\n\n", eName);
+    LittleFS.remove(eName);
   }
   else
   {
     Debugf("\r\nfile [%s] not found..\r\n\n", eName);
   }
   //--- empty buffer ---
+  
   while (TelnetStream.available() > 0)
   {
     yield();
-    (char)TelnetStream.read();
+    dummy = TelnetStream.read();
   }
-
+  dummy = dummy + 1;
 } // eraseFile()
 
 //===========================================================================================
@@ -720,10 +717,10 @@ bool DSMRfileExist(const char *fileName, bool doDisplay)
   {
     oled_Print_Msg(1, "Bestaat:", 10);
     oled_Print_Msg(2, fName, 10);
-    oled_Print_Msg(3, "op SPIFFS?", 250);
+    oled_Print_Msg(3, "op LittleFS?", 250);
   }
 
-  if (!SPIFFS.exists(fName))
+  if (!LittleFS.exists(fName))
   {
     if (doDisplay)
     {

@@ -30,7 +30,7 @@ String buildDateTimeString(const char* timeStamp, int len)
 void epochToTimestamp(time_t t, char *ts, int8_t len) 
 {
   if (len < 12) {
-    strncpy(ts, "Error", sizeof(ts));
+    strncpy(ts, "Error", len);
     return;
   }
   //------------yy  mm  dd  hh  mm  ss

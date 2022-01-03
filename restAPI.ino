@@ -297,16 +297,8 @@ void handleSmApi(const char *URI, const char *word4, const char *word5, const ch
     }
 
     tlgrm[l++] = '!';
-#if !defined( USE_PRE40_PROTOCOL )
-    // next 6 bytes are "<CRC>\r\n"
-    for (int i=0; ( i<6 && (i<(sizeof(tlgrm)-7)) ); i++)
-    {
-      tlgrm[l++] = (char)SM_SERIAL.read();
-    }
-#else
     tlgrm[l++]    = '\r';
     tlgrm[l++]    = '\n';
-#endif
     tlgrm[(l +1)] = '\0';
     // shift telegram 1 char to the right (make room at pos [0] for '/')
     for (int i=strlen(tlgrm); i>=0; i--) { tlgrm[i+1] = tlgrm[i]; yield(); }
@@ -329,13 +321,7 @@ void sendDeviceInfo()
 #ifdef USE_REQUEST_PIN
     strlcat(compileOptions, "[USE_REQUEST_PIN]", sizeof(compileOptions));
 #endif
-#if defined( USE_PRE40_PROTOCOL )
-    strlcat(compileOptions, "[USE_PRE40_PROTOCOL]", sizeof(compileOptions));
-#elif defined( USE_BELGIUM_PROTOCOL )
-    strlcat(compileOptions, sizeof(compileOptions), "[USE_BELGIUM_PROTOCOL]", sizeof(compileOptions));
-#else
-    strlcat(compileOptions, "[USE_DUTCH_PROTOCOL]", sizeof(compileOptions));
-#endif
+strlcat(compileOptions, "[USE_DUTCH_PROTOCOL]", sizeof(compileOptions));
 #ifdef USE_UPDATE_SERVER
     strlcat(compileOptions, "[USE_UPDATE_SERVER]", sizeof(compileOptions));
 #endif
@@ -398,12 +384,9 @@ void sendDeviceInfo()
 
 #if defined(ESP8266) 
   sendNestedJsonObj("flashchiprealsize", (float)(ESP.getFlashChipRealSize() / 1024.0 / 1024.0), "MB");
-  SPIFFS.info(SPIFFSinfo);
-  sendNestedJsonObj("spiffssize", (float)(SPIFFSinfo.totalBytes / (1024.0 * 1024.0)), "MB");
-#elif defined(ESP32)
-  sendNestedJsonObj("spiffssize", (float)(SPIFFS.totalBytes() / (1024.0 * 1024.0)), "MB");
+  LittleFS.info(fs_info);
+  sendNestedJsonObj("littlefssize", (float)(fs_info.totalBytes / (1024.0 * 1024.0)), "MB");
 #endif
-
   sendNestedJsonObj("flashchipspeed", (float)(ESP.getFlashChipSpeed() / 1000.0 / 1000.0), "MHz");
 
   FlashMode_t ideMode = ESP.getFlashChipMode();
@@ -557,11 +540,8 @@ struct buildJsonApiV0SmActual
     template<typename Item>
     void apply(Item &i) {
       skip = false;
-      String Name = Item::name;
+      String Name = Item::get_name();
       //-- for dsmr30 -----------------------------------------------
-#if defined( USE_PRE40_PROTOCOL )
-      if (Name.indexOf("gas_delivered2") == 0) Name = "gas_delivered";
-#endif
       if (!isInFieldsArray(Name.c_str(), fieldsElements))
       {
         skip = true;
@@ -601,11 +581,8 @@ struct buildJsonApi
     template<typename Item>
     void apply(Item &i) {
       skip = false;
-      String Name = Item::name;
+      String Name = Item::get_name();
       //-- for dsmr30 -----------------------------------------------
-#if defined( USE_PRE40_PROTOCOL )
-      if (Name.indexOf("gas_delivered2") == 0) Name = "gas_delivered";
-#endif
       if (!isInFieldsArray(Name.c_str(), fieldsElements))
       {
         skip = true;
@@ -723,16 +700,16 @@ void copyToFieldsArray(const char inArray[][35], int elemts)
 } // copyToFieldsArray()
 
 
-bool listFieldsArray(char inArray[][35])
-{
-  int i = 0;
+// bool listFieldsArray(char inArray[][35])
+// {
+//   int i = 0;
 
-  for ( i=0; strlen(inArray[i]) == 0; i++)
-  {
-    DebugTf("[%2d] => inArray[%s]\r\n", i, inArray[i]); 
-  }
+//   for ( i=0; strlen(inArray[i]) == 0; i++)
+//   {
+//     DebugTf("[%2d] => inArray[%s]\r\n", i, inArray[i]); 
+//   }
   
-} // listFieldsArray()
+// } // listFieldsArray()
 
 
 //====================================================

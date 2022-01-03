@@ -2046,7 +2046,7 @@ http://DSMR-API.local/api/v1/dev/settings</pre>", false);
           ,[ "flashchipid",               "Flash Chip ID" ]
           ,[ "flashchipsize",             "Flash Chip Size" ]
           ,[ "flashchiprealsize",         "Flash Chip Real Size" ]
-          ,[ "spiffssize",                "SPIFFS Size" ]
+          ,[ "LittleFSsize",                "LittleFS Size" ]
           ,[ "flashchipspeed",            "Flash Chip Speed" ]
           ,[ "flashchipmode",             "Flash Chip Mode" ]
           ,[ "boardtype",                 "Board Type" ]

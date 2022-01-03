@@ -235,7 +235,7 @@ uint32_t __TimeLeft__(uint32_t timer_due)
 
 
 // process variadic from macro's
-uint32_t getParam(int i, ...) 
+uint32_t getParam(uint32_t i, ...) 
 {
   uint32_t parm, p;
   va_list vl;

@@ -53,6 +53,14 @@ Documentation of DSMRloggerAPI can be found [here](https://mrwheel-docs.gitbook.
 <table>
 <tr><th>Versie</th><th>Opmerking</th></tr>
 <tr>
+   <td valign="top">2.4.0-rc1</td>
+   <td>Change SPIFFS in LittleFS and upgrade to Arduino 1.8. and ESP8266 3.0.2, ESP32 1.0.6
+   <br>Fix compiler warnings/errors for  ESP8266 
+   <br>Fix compiler warnings/errors for ESP32
+   <br>Upgrade to latest DSMR.h from https://github.com/matthijskooijman/arduino-dsmr  ignore the deprecated warnings for now.
+</td>
+</tr>
+<tr>
    <td valign="top">2.3.0-rc5</td>
    <td>Release Candidate (rc5) of DSMRlogger-Next
    <br>Implemented auto-discovery for Homeassistant and Domoticz
