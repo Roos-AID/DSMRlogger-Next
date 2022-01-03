@@ -97,7 +97,8 @@ void ESP8266_APIlistFiles()
   while (dir.next())  
   {
     dirMap[fileNr].Name[0] = '\0';
-    strncat(dirMap[fileNr].Name, dir.fileName().substring(1).c_str(), 29); // remove leading '/'
+    // strncat(dirMap[fileNr].Name, dir.fileName().substring(1).c_str(), 29); // remove leading '/'
+    strncat(dirMap[fileNr].Name, dir.fileName().substring(0).c_str(), 30); // remove leading '/'  not for LittleFS ??? 
     dirMap[fileNr].Size = dir.fileSize();
     fileNr++;
   }
@@ -174,7 +175,8 @@ void ESP32_APIlistFiles()
       Debugln(file.size());
       dirMap[fileNr].Name[0] = '\0';
       strncat(dirMap[fileNr].Name, file.name(), 29); // first copy file.name() to dirMap
-      memmove(dirMap[fileNr].Name, dirMap[fileNr].Name+1, strlen(dirMap[fileNr].Name)); // remove leading '/'
+      // memmove(dirMap[fileNr].Name, dirMap[fileNr].Name+1, strlen(dirMap[fileNr].Name)); // remove leading '/'
+      memmove(dirMap[fileNr].Name, dirMap[fileNr].Name, strlen(dirMap[fileNr].Name)); // remove leading '/' not for ESP32 LittleFS
       dirMap[fileNr].Size = file.size();
     }
     file = root.openNextFile();

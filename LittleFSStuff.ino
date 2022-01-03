@@ -17,7 +17,7 @@ int16_t bytesWritten;
 void readLastStatus()
 {
   char buffer[50] = "";
-  char dummy[50] = "";
+  char dummy[50] = ""; 
   char LittleFSTimestamp[20] = "";
 
   File _file = LittleFS.open("/DSMRstatus.csv", "r");
@@ -520,7 +520,9 @@ void ESP8266_listFiles()
   while (dir.next())
   {
     dirMap[fileNr].Name[0] = '\0';
-    strncat(dirMap[fileNr].Name, dir.fileName().substring(1).c_str(), 19); // remove leading '/'
+    // strncat(dirMap[fileNr].Name, dir.fileName().substring(1).c_str(), 19); // remove leading '/'
+    strncat(dirMap[fileNr].Name, dir.fileName().substring(0).c_str(), 20); // remove leading '/'  NOT FOR LittleFS ???? 
+
     dirMap[fileNr].Size = dir.fileSize();
     fileNr++;
   }
@@ -605,7 +607,8 @@ void ESP32_listFiles()
       Debugln(file.size());
       dirMap[fileNr].Name[0] = '\0';
       strncat(dirMap[fileNr].Name, file.name(), 29);                                      // first copy file.name() to dirMap
-      memmove(dirMap[fileNr].Name, dirMap[fileNr].Name + 1, strlen(dirMap[fileNr].Name)); // remove leading '/'
+      // memmove(dirMap[fileNr].Name, dirMap[fileNr].Name + 1, strlen(dirMap[fileNr].Name)); // remove leading '/'
+      memmove(dirMap[fileNr].Name, dirMap[fileNr].Name, strlen(dirMap[fileNr].Name)); // remove leading '/'  Not for ESP32 LittleFS
       dirMap[fileNr].Size = file.size();
     }
     file = root.openNextFile();
@@ -638,7 +641,7 @@ void ESP32_listFiles()
 
   Debugln(F("\r"));
   Debugf("Available LittleFS space [%6d]kB\r\n", (freeSpace() / 1024));
-  Debugf("           LittleFS Size [%6d]kB\r\n", (LittleFS.totalBytes() / 1024));
+  Debugf("          LittleFS Size [%6d]kB\r\n", (LittleFS.totalBytes() / 1024));
   //  Debugf("     LittleFS block Size [%6d]bytes\r\n", LittleFS.blockSize());
   //  Debugf("      LittleFS page Size [%6d]bytes\r\n", LittleFS.pageSize());
   //  Debugf(" LittleFS max.Open Files [%6d]\r\n\r\n", LittleFS.maxOpenFiles());
@@ -659,14 +662,14 @@ void listFiles() // Senden aller Daten an den Client
 void eraseFile()
 {
   char eName[30] = "";
-  int dummy;
+  int dummy; // to fix stupid compiler error warning variable not used...
   //--- erase buffer
   while (TelnetStream.available() > 0)
   {
     yield();
     dummy = TelnetStream.read();
   }
-  dummy = dummy + 1;
+  dummy = dummy + 1; // to fix stupid compiler error warning variable not used...
   Debug("Enter filename to erase: ");
   TelnetStream.setTimeout(10000);
   TelnetStream.readBytesUntil('\n', eName, sizeof(eName));
@@ -699,7 +702,7 @@ void eraseFile()
     yield();
     dummy = TelnetStream.read();
   }
-  dummy = dummy + 1;
+  dummy = dummy + 1; // to fix stupid compiler error warning variable not used...
 } // eraseFile()
 
 //===========================================================================================

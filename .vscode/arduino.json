@@ -1,9 +1,8 @@
 {
     "board": "esp32:esp32:lolin32",
     "output": "../build",
-    "configuration": "FlashFreq=80,PartitionScheme=min_spiffs,CPUFreq=240,UploadSpeed=115200",
+    "configuration": "FlashFreq=80,PartitionScheme=no_ota,CPUFreq=240,UploadSpeed=115200",
     "sketch": "DSMRlogger-Next.ino",
-    "output": "../build",
     "port": "/dev/cu.usbserial-0001",
     "prebuild": "/Users/robroosm1/Documents/Arduino/autoinc-semver-master/semver-incr-build.sh ./version.h"
 }
