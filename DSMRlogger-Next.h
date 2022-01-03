@@ -54,9 +54,9 @@
     #define DTR_ENABLE  27
   #endif
 
-  #include <LITTLEFS.h>
-  #define LittleFS LITTLEFS
-
+ // #include <LITTLEFS.h>        // with ESP32 1.0.6
+ // #define LittleFS LITTLEFS  // with ESP32 1.0.6
+   #include <LittleFS.h>  // with ESP32 2.0.4 
 #endif
 
 

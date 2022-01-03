@@ -53,6 +53,11 @@ Documentation of DSMRloggerAPI can be found [here](https://mrwheel-docs.gitbook.
 <table>
 <tr><th>Versie</th><th>Opmerking</th></tr>
 <tr>
+   <td valign="top">2.4.1</td>
+   <td>Upgrade ESP32 2.0.4
+   <br>Fix compiler warnings/errors for ESP32, use standard LittleFS.h 
+</td>
+</tr><tr>
    <td valign="top">2.4.0-rc1</td>
    <td>Change SPIFFS in LittleFS and upgrade to Arduino 1.8. and ESP8266 3.0.2, ESP32 1.0.6
    <br>Fix compiler warnings/errors for  ESP8266 
