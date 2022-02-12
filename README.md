@@ -53,6 +53,10 @@ Documentation of DSMRloggerAPI can be found [here](https://mrwheel-docs.gitbook.
 <table>
 <tr><th>Versie</th><th>Opmerking</th></tr>
 <tr>
+   <td valign="top">2.4.2</td>
+   <td>Expand MQHA Autoconfigure with NodeId and UniqueId
+</td>
+</tr><tr><tr>
    <td valign="top">2.4.1</td>
    <td>Upgrade ESP32 2.0.4
    <br>Fix compiler warnings/errors for ESP32, use standard LittleFS.h 

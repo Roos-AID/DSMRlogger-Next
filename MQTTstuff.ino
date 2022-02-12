@@ -1,7 +1,7 @@
 /* 
 ***************************************************************************  
 **  Program  : MQTTstuff, part of DSMRlogger-Next
-**  Version  : v2.3.0-rc5
+**  Version  : v2.4.2
 **
 **  Copyright (c) 2020 Robert van den Breemen
 **   Based on (c) 2020 Willem Aandewiel
@@ -24,16 +24,46 @@
   
 //  static PubSubClient MQTTclient(wifiClient);
   int8_t              reconnectAttempts = 0;
-  char                lastMQTTtimestamp[15] = "-";
-  char                mqttBuff[100] {0};
+  // char                lastMQTTtimestamp[15] = "-";
+  // char                mqttBuff[512] {0};
 
 
   enum states_of_MQTT { MQTT_STATE_INIT, MQTT_STATE_TRY_TO_CONNECT, MQTT_STATE_IS_CONNECTED, MQTT_STATE_ERROR };
   enum states_of_MQTT stateMQTT = MQTT_STATE_INIT;
 
   char                MQTTclientId[80] {0}; //hostname + mac 
-
+  bool settingMQTTenable = true ;
+  bool bDebugMQTT = true ;
+#else
+  bool settingMQTTenable = false ;
+  bool bDebugMQTT = false ;
 #endif
+
+
+#define MQTTDebugTln(...) ({ if (bDebugMQTT) DebugTln(__VA_ARGS__);    })
+#define MQTTDebugln(...)  ({ if (bDebugMQTT) Debugln(__VA_ARGS__);    })
+#define MQTTDebugTf(...)  ({ if (bDebugMQTT) DebugTf(__VA_ARGS__);    })
+#define MQTTDebugf(...)   ({ if (bDebugMQTT) Debugf(__VA_ARGS__);    })
+#define MQTTDebugT(...)   ({ if (bDebugMQTT) DebugT(__VA_ARGS__);    })
+#define MQTTDebug(...)    ({ if (bDebugMQTT) Debug(__VA_ARGS__);    })
+
+void PrintMQTTError(){
+  MQTTDebugln();
+  switch (MQTTclient.state())
+  {
+    case MQTT_CONNECTION_TIMEOUT     : MQTTDebugTln(F("Error: MQTT connection timeout"));break;
+    case MQTT_CONNECTION_LOST        : MQTTDebugTln(F("Error: MQTT connections lost"));break;
+    case MQTT_CONNECT_FAILED         : MQTTDebugTln(F("Error: MQTT connection failed"));break;
+    case MQTT_DISCONNECTED           : MQTTDebugTln(F("Error: MQTT disconnected"));break;
+    case MQTT_CONNECTED              : MQTTDebugTln(F("Error: MQTT connected"));break;
+    case MQTT_CONNECT_BAD_PROTOCOL   : MQTTDebugTln(F("Error: MQTT connect bad protocol"));break;
+    case MQTT_CONNECT_BAD_CLIENT_ID  : MQTTDebugTln(F("Error: MQTT connect bad client id"));break;
+    case MQTT_CONNECT_UNAVAILABLE    : MQTTDebugTln(F("Error: MQTT connect unavailable"));break;
+    case MQTT_CONNECT_BAD_CREDENTIALS: MQTTDebugTln(F("Error: MQTT connect bad credentials"));break;
+    case MQTT_CONNECT_UNAUTHORIZED   : MQTTDebugTln(F("Error: MQTT connect unauthorized"));break;
+    default: MQTTDebugTln(F("Error: MQTT unknown error"));
+  }
+}
 
 //===========================================================================================
 void connectMQTT() 
@@ -293,15 +323,34 @@ void sendMQTTData(const char* item, const char *json)
   delay(0);
 } // sendMQTTData()
 
+
+/* 
+* topic:  <string> , topic will be used as is (no prefixing), retained = true
+* json:   <string> , payload to send
+*/
 //===========================================================================================
-void sendMQTT(const char* topic, const char *json, const int8_t len) 
+void sendMQTT(String topic, String json){
+  if (!settingMQTTenable) return;
+  sendMQTT(CSTR(topic), CSTR(json), json.length());
+} 
+
+//===========================================================================================
+void sendMQTT(const char* topic, const char *json, const size_t len) 
 {
-  if (!MQTTclient.connected() || !isValidIP(MQTTbrokerIP)) return;
-  // DebugTf("Sending data to MQTT server [%s]:[%d] ", settingMQTTbroker.c_str(), settingMQTTbrokerPort);  
-  DebugTf("Sending MQTT: TopicId [%s] Message [%s]\r\n", topic, json);
+  if (!settingMQTTenable) return;
+  if (!MQTTclient.connected()) {DebugTln(F("Error: MQTT broker not connected.")); PrintMQTTError(); return;} 
+  if (!isValidIP(MQTTbrokerIP)) {DebugTln(F("Error: MQTT broker IP not valid.")); return;} 
+  // MQTTDebugTf("Sending MQTT: server %s:%d => TopicId [%s] --> Message [%s]\r\n", settingMQTTbroker.c_str(), settingMQTTbrokerPort, topic, json);
+  MQTTDebugTf("Sending MQTT => TopicId [%s] --> Message [%s]\r\n", topic, json);
   if (MQTTclient.getBufferSize() < len) MQTTclient.setBufferSize(len); //resize buffer when needed
-  if (!MQTTclient.publish(topic, json, true)) DebugTln("MQTT publish failed."); 
-  delay(0);
+
+  if (MQTTclient.beginPublish(topic, len, true)){
+    for (size_t i = 0; i<len; i++) {
+      if(!MQTTclient.write(json[i])) PrintMQTTError();
+    }  
+    MQTTclient.endPublish();
+  } else PrintMQTTError();
+
 } // sendMQTTData()
 
 //===========================================================================================
@@ -316,6 +365,12 @@ bool splitString(String sIn, char del, String& cKey, String& cVal)
   cKey = sIn.substring(0,pos); cKey.trim();   //before, and trim spaces
   cVal = sIn.substring(pos+1); cVal.trim();   //after,and trim spaces
   return true;
+}
+
+void resetMQTTBufferSize()
+{
+  // if (!settingMQTTenable) return;
+  MQTTclient.setBufferSize(256);
 }
 
 //===========================================================================================
@@ -352,7 +407,11 @@ void doAutoConfigure()
           if (splitString( sLine, ',', sTopic, sMsg))
           {
             DebugTf("sTopic[%s], sMsg[%s]\r\n", sTopic.c_str(), sMsg.c_str());
-            sendMQTT(sTopic.c_str(), sMsg.c_str(), (sTopic.length() + sMsg.length()+2));
+            // sendMQTT(sTopic.c_str(), sMsg.c_str(), (sTopic.length() + sMsg.length()+2));
+            sendMQTT(sTopic, sMsg);
+
+            resetMQTTBufferSize();
+
           } else DebugTf("Either comment or invalid config line: [%s]\r\n", sLine.c_str());
       } // while available()
       fh.close();  
