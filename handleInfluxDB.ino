@@ -30,7 +30,8 @@
 // InfluxDB client instance
 //InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN);
 // InfluxDB client instance for InfluxDB 1
-InfluxDBClient client(INFLUXDB_URL, INFLUXDB_DB_NAME);
+// InfluxDBClient client(INFLUXDB_URL, INFLUXDB_DB_NAME);
+InfluxDBClient client();
 
 // Set timezone string according to https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
 // Examples:
@@ -40,8 +41,8 @@ InfluxDBClient client(INFLUXDB_URL, INFLUXDB_DB_NAME);
 //  Central Europe: "CET-1CEST,M3.5.0,M10.5.0/3"
 #define TZ_INFO "CET-1CEST,M3.5.0,M10.5.0/3"
 #define WRITE_PRECISION WritePrecision::S
-#define MAX_BATCH_SIZE 16
-#define WRITE_BUFFER_SIZE 32
+#define MAX_BATCH_SIZE 32
+#define WRITE_BUFFER_SIZE 64
 
 time_t thisEpoch;
 
@@ -75,7 +76,7 @@ void initInfluxDB()
   client.setWriteOptions(WriteOptions().bufferSize(WRITE_BUFFER_SIZE));
 
   //setup the HTTPoptions to reuse HTTP
-  //client.setHTTPOptions(HTTPOptions().connectionReuse(true));
+  client.setHTTPOptions(HTTPOptions().connectionReuse(true));
 
 }
 struct writeInfluxDataPoints {
@@ -92,7 +93,7 @@ struct writeInfluxDataPoints {
         pointItem.addTag("instance",Item::get_name());     
         pointItem.addField("value", i.val());
         if (Verbose1) {
-          DebugT("Writing to influxdb:");
+          DebugT("##### Writing to influxdb:");
           Debugln(pointItem.toLineProtocol());          
         }
         if (!client.writePoint(pointItem)) {

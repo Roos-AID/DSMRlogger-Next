@@ -86,7 +86,7 @@
 // #define USE_MINDERGAS             // define if you want to update mindergas (configure through webinterface)
 //  #define USE_SYSLOGGER               // define if you want to use the sysLog library for debugging
 //  #define SHOW_PASSWRDS               // well .. show the PSK key and MQTT password, what else?
-#define USE_WEMOSLOLIN32            //define if it is a WEMOS LOLIN32 with OLED (requires different IO pins and I2Cadres)
+#define USE_WEMOSLOLIN32            //define if it is a WEMOS LOLIN32 with OLED (requires different IO pins and I2Cadres)#define DEVICE "ESP32"
 /******************** don't change anything below this comment **********************/
 
 #ifndef LED_BUILTIN
