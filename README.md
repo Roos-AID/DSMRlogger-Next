@@ -53,6 +53,10 @@ Documentation of DSMRloggerAPI can be found [here](https://mrwheel-docs.gitbook.
 <table>
 <tr><th>Versie</th><th>Opmerking</th></tr>
 <tr>
+   <td valign="top">2.4.3</td>
+   <td>Fix Influx , some version combinations did cause data to be stored on Epoch 0 time 
+</td>
+<tr>
    <td valign="top">2.4.2</td>
    <td>Expand MQHA Autoconfigure with NodeId and UniqueId
 </td>

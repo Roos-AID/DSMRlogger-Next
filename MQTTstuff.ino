@@ -406,7 +406,7 @@ void doAutoConfigure()
           // DebugTf("sline[%s]\r\n", sLine.c_str());
           if (splitString( sLine, ',', sTopic, sMsg))
           {
-            DebugTf("sTopic[%s], sMsg[%s]\r\n", sTopic.c_str(), sMsg.c_str());
+            if (Verbose1) DebugTf("sTopic[%s], sMsg[%s]\r\n", sTopic.c_str(), sMsg.c_str());
             // sendMQTT(sTopic.c_str(), sMsg.c_str(), (sTopic.length() + sMsg.length()+2));
             sendMQTT(sTopic, sMsg);
 

@@ -1,9 +1,9 @@
 /*
 ***************************************************************************  
 **  Program  : handleInfluxDB - part of DSMRlogger-Next
-**  Version  : v2.3.0-rc5
+**  Version  : v2.4.3
 **
-**  Copyright (c) 2020 Robert van den Breemen
+**  Copyright (c) 2022 Robert van den Breemen
 **
 **  Description: Handles sending all data directly to an influxdb instance
 **
@@ -30,8 +30,8 @@
 // InfluxDB client instance
 //InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN);
 // InfluxDB client instance for InfluxDB 1
-// InfluxDBClient client(INFLUXDB_URL, INFLUXDB_DB_NAME);
-InfluxDBClient client();
+InfluxDBClient client(INFLUXDB_URL, INFLUXDB_DB_NAME);
+// InfluxDBClient client();
 
 // Set timezone string according to https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
 // Examples:
@@ -71,9 +71,11 @@ void initInfluxDB()
   //deprecated writeoptions: 
   // client.setWriteOptions(WRITE_PRECISION, MAX_BATCH_SIZE, WRITE_BUFFER_SIZE);
   
-  client.setWriteOptions(WriteOptions().writePrecision(WRITE_PRECISION));
-  client.setWriteOptions(WriteOptions().batchSize(MAX_BATCH_SIZE));
-  client.setWriteOptions(WriteOptions().bufferSize(WRITE_BUFFER_SIZE));
+  // client.setWriteOptions(WriteOptions().writePrecision(WRITE_PRECISION));
+  // client.setWriteOptions(WriteOptions().batchSize(MAX_BATCH_SIZE));
+  // client.setWriteOptions(WriteOptions().bufferSize(WRITE_BUFFER_SIZE));
+  // Correct way to do it as only last WriteOptions is in effect :  Fix 2.4.3 
+  client.setWriteOptions(WriteOptions().writePrecision(WRITE_PRECISION).batchSize(MAX_BATCH_SIZE).bufferSize(WRITE_BUFFER_SIZE));
 
   //setup the HTTPoptions to reuse HTTP
   client.setHTTPOptions(HTTPOptions().connectionReuse(true));
@@ -89,11 +91,12 @@ struct writeInfluxDataPoints {
       {
         //when there is a unit, then it is a measurement
         Point pointItem(Item::unit());
+        pointItem.setTime(WRITE_PRECISION) ;  // Point needs same precision as client !  Fix 2.4.3 
         pointItem.setTime(thisEpoch);
         pointItem.addTag("instance",Item::get_name());     
         pointItem.addField("value", i.val());
         if (Verbose1) {
-          DebugT("##### Writing to influxdb:");
+          DebugT("Writing to influxdb:");
           Debugln(pointItem.toLineProtocol());          
         }
         if (!client.writePoint(pointItem)) {
