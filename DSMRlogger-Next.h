@@ -59,6 +59,14 @@
    #include <LittleFS.h>  // with ESP32 2.0.4 
 #endif
 
+#include <AceTime.h>
+//Use acetime
+using namespace ace_time;
+static BasicZoneProcessor timeProcessor;
+static const int CACHE_SIZE = 3;
+// static BasicZoneManager<CACHE_SIZE> manager(zonedb::kZoneRegistrySize, zonedb::kZoneRegistry);
+static BasicZoneProcessorCache<CACHE_SIZE> zoneProcessorCache;
+static BasicZoneManager timezoneManager(zonedb::kZoneRegistrySize, zonedb::kZoneRegistry, zoneProcessorCache);
 
 
 #include <TimeLib.h>            // https://github.com/PaulStoffregen/Time

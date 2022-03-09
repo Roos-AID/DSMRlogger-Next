@@ -79,8 +79,8 @@
 /******************** compiler options  ********************************************/
 #define USE_REQUEST_PIN           // define if it's a esp8266 with GPIO 12 connected to SM DTR pin
 #define USE_UPDATE_SERVER         // define if there is enough memory and updateServer to be used
-//  #define USE_NTP_TIME              // define to generate Timestamp from NTP (Only Winter Time for now)
-//  #define HAS_NO_SLIMMEMETER        // define for testing only!
+ #define USE_NTP_TIME              // define to generate Timestamp from NTP (Only Winter Time for now)
+#define HAS_NO_SLIMMEMETER        // define for testing only!
 #define USE_INFLUXDB              // define if you want to use Influxdb (configure through webinterface)
 #define USE_MQTT                  // define if you want to use MQTT (configure through webinterface)
 // #define USE_MINDERGAS             // define if you want to update mindergas (configure through webinterface)
@@ -333,6 +333,8 @@ void setup()
 //============= end LittleFS ========================================
 
 #if defined(USE_NTP_TIME)                                   //USE_NTP
+  startNTP();
+/*
 //================ startNTP =========================================
   if (settingOledType > 0)                                  //USE_NTP
   {                                                         //USE_NTP
@@ -360,6 +362,7 @@ void setup()
   }                                                         //USE_NTP
   prevNtpHour = hour();                                     //USE_NTP
                                                             //USE_NTP
+                                                */            
 #endif  //USE_NTP_TIME                                      //USE_NTP
 //================ end NTP =========================================
 
@@ -688,6 +691,8 @@ void doSystemTasks()
   {
     checkFlashButton();
   }
+    
+  loopNTP();
 
   yield();
 
@@ -734,18 +739,18 @@ void loop ()
   if DUE(reconnectWiFi) 
     doReconnectWifi();
 
-//--- if NTP set, see if it needs synchronizing
-#if defined(USE_NTP_TIME)                                           //USE_NTP
-  if DUE(synchrNTP)                                                 //USE_NTP
-  {
-  //if (timeStatus() == timeNeedsSync || prevNtpHour != hour())     //USE_NTP
-  //{
-      //prevNtpHour = hour();                                         //USE_NTP
-      setSyncProvider(getNtpTime);                                  //USE_NTP
-      setSyncInterval(600);                                         //USE_NTP
-  //}
-  }
-#endif                                                              //USE_NTP
+// //--- if NTP set, see if it needs synchronizing
+// #if defined(USE_NTP_TIME)                                           //USE_NTP
+//   if DUE(synchrNTP)                                                 //USE_NTP
+//   {
+//   //if (timeStatus() == timeNeedsSync || prevNtpHour != hour())     //USE_NTP
+//   //{
+//       //prevNtpHour = hour();                                         //USE_NTP
+//       setSyncProvider(getNtpTime);                                  //USE_NTP
+//       setSyncInterval(600);                                         //USE_NTP
+//   //}
+//   }
+// #endif                                                              //USE_NTP
   
   yield();
   

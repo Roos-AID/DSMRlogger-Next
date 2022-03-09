@@ -30,8 +30,8 @@
 // InfluxDB client instance
 //InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN);
 // InfluxDB client instance for InfluxDB 1
-// InfluxDBClient client(INFLUXDB_URL, INFLUXDB_DB_NAME);
-InfluxDBClient client();
+InfluxDBClient client(INFLUXDB_URL, INFLUXDB_DB_NAME);
+// InfluxDBClient client();
 
 // Set timezone string according to https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
 // Examples:
@@ -66,17 +66,20 @@ void initInfluxDB()
     DebugT("InfluxDB connection failed: ");
     Debugln(client.getLastErrorMessage());
   }
-    
+
+   //setup the HTTPoptions to reuse HTTP
+  client.setHTTPOptions(HTTPOptions().connectionReuse(true));
+
+
   //Enable messages batching and retry buffer
   //deprecated writeoptions: 
   // client.setWriteOptions(WRITE_PRECISION, MAX_BATCH_SIZE, WRITE_BUFFER_SIZE);
   
-  client.setWriteOptions(WriteOptions().writePrecision(WRITE_PRECISION));
-  client.setWriteOptions(WriteOptions().batchSize(MAX_BATCH_SIZE));
-  client.setWriteOptions(WriteOptions().bufferSize(WRITE_BUFFER_SIZE));
+  // client.setWriteOptions(WriteOptions().writePrecision(WRITE_PRECISION));
+  // client.setWriteOptions(WriteOptions().batchSize(MAX_BATCH_SIZE));
+  // client.setWriteOptions(WriteOptions().bufferSize(WRITE_BUFFER_SIZE));
+  client.setWriteOptions(WriteOptions().writePrecision(WRITE_PRECISION).batchSize(MAX_BATCH_SIZE).bufferSize(WRITE_BUFFER_SIZE));
 
-  //setup the HTTPoptions to reuse HTTP
-  client.setHTTPOptions(HTTPOptions().connectionReuse(true));
 
 }
 struct writeInfluxDataPoints {
@@ -87,10 +90,13 @@ struct writeInfluxDataPoints {
     {
       if (strlen(Item::unit()) != 0) 
       {
+        String Itemname = Item::unit() ;
+        String Itemtag = Item::get_name() ;
         //when there is a unit, then it is a measurement
-        Point pointItem(Item::unit());
+        Point pointItem(Itemname);
+        pointItem.setTime(WRITE_PRECISION) ;
         pointItem.setTime(thisEpoch);
-        pointItem.addTag("instance",Item::get_name());     
+        pointItem.addTag("instance",Itemtag);     
         pointItem.addField("value", i.val());
         if (Verbose1) {
           DebugT("##### Writing to influxdb:");
@@ -126,6 +132,28 @@ void handleInfluxDB()
       // Write all remaining points to db
       client.flushBuffer();
     }
+
+    // Now send one test value
+    String Itemname = "V" ;
+    String Itemtag ="testmeasure" ;
+    float Value = 3489 / 10 ;
+    //when there is a unit, then it is a measurement
+    Point pointItem(Itemname);
+    pointItem.setTime(WRITE_PRECISION);
+    pointItem.setTime(thisEpoch);
+    pointItem.addTag("instance",Itemtag);     
+    pointItem.addField("value", Value);
+    if (Verbose1) {
+      DebugT("##### Writing to influxdb:");
+      Debugln(pointItem.toLineProtocol());          
+    }
+    if (!client.writePoint(pointItem)) {
+      DebugT("InfluxDB write failed: ");
+      Debugln(client.getLastErrorMessage());
+    }
+
+
+
     DebugTf("Influxdb write took [%d] ms\r\n", (int)(millis()-timeThis));
   }
   
